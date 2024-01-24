@@ -20,31 +20,72 @@
 -- ]])
 
 -- require("mason").setup({
---     PATH = "prepend", -- "skip" seems to cause the spawning error
+--       PATH = "prepend", -- "skip" seems to cause the spawning error
 -- })
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    "git",
-    "clone",
-    "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable", -- latest stable release
-    lazypath,
-  })
+    vim.fn.system({
+      "git",
+      "clone",
+      "--filter = blob:none",
+      "https://github.com/folke/lazy.nvim.git",
+      "--branch = stable", -- latest stable release
+      lazypath,
+    })
 end
 vim.opt.rtp:prepend(lazypath)
 
 vim.g.mapleader = " "
 
+vim.cmd([[
+" COLORSCHEMES:
+
+colorscheme molokai
+" set background = dark
+" colorscheme iceberg
+" colorscheme blackops
+]])
+
 require("lazy").setup({
+    {
+        "iamcco/markdown-preview.nvim",
+        cmd = { 
+            "MarkdownPreviewToggle",
+            "MarkdownPreview",
+            "MarkdownPreviewStop"
+        },
+        ft = { "markdown" },
+        build = function() 
+            vim.fn["mkdp#util#install"]()
+        end,
+    },
+    {
+        "ellisonleao/glow.nvim", 
+        config = true,
+        cmd = "Glow",
+    },
+	{
+		"nvim-focus/focus.nvim",
+		version = false,
+	},
+	"nvim-tree/nvim-web-devicons",
+	{
+		"SmiteshP/nvim-navic",
+		dependencies = "neovim/nvim-lspconfig",
+
+	},
+    {
+        'akinsho/toggleterm.nvim',
+        version = "*",
+        opts = {
+            --[[ things you want to change go here]]
+        },
+    },
 	"mfussenegger/nvim-dap",
-	"polirritmico/monokai-nightasty.nvim",
 	"nvim-lua/plenary.nvim",
 	"tomasr/molokai",
 	"cocopon/iceberg.vim",
- 	"folke/which-key.nvim",
  	"preservim/nerdtree",
  	"neovim/nvim-lspconfig",
  	"simrat39/rust-tools.nvim",
@@ -62,35 +103,135 @@ require("lazy").setup({
 			'nvim-lua/plenary.nvim'
 		}
 	},
---	{
---		"nvim-treesitter/nvim-treesitter",
---		build = ":TSUpdate",
---		config = function () 
---			local configs = require("nvim-treesitter.configs")
---
---			configs.setup({
---				ensure_installed = {},
---				sync_install = false,
---	    			highlight = { enable = true },
---	    			indent = { enable = true },  
---	    		})
---		end
---	},
- 	event = "VeryLazy",
- 	init = function()
- 		vim.o.timeout = true
- 		vim.o.timeoutlen = 300
- 	end,
- 	opts = {
- 		-- your configuration comes here
- 		-- or leave it empty to use the default settings
- 		-- refer to the configuration section below
- 	}
+	{
+		"utilyre/barbecue.nvim",
+		name = "barbecue",
+		version = "*",
+		dependencies = {
+			"SmiteshP/nvim-navic",
+			"nvim-tree/nvim-web-devicons", -- optional dependency
+		},
+		opts = {
+			-- configurations go here
+		},
+	},
+	{
+		"debugloop/telescope-undo.nvim",
+		dependencies = { -- note how they're inverted to above example
+			{
+			  "nvim-telescope/telescope.nvim",
+			  dependencies = { "nvim-lua/plenary.nvim" },
+			},
+		},
+		keys = {
+			{ -- lazy style key map
+			  "<leader>u",
+			  "<cmd>Telescope undo<cr>",
+			  desc = "undo history",
+			},
+		},
+		opts = {
+			-- don't use `defaults = { }` here, do this in the main telescope spec
+			extensions = {
+			  undo = {
+			    -- telescope-undo.nvim config, see below
+			  },
+			  -- no other extensions here, they can have their own spec too
+			},
+		},
+		config = function(_, opts)
+			-- Calling telescope's setup from multiple specs does not hurt, it will happily merge the
+			-- configs for us. We won't use data, as everything is in it's own namespace (telescope
+			-- defaults, as well as each extension).
+			require("telescope").setup(opts)
+			require("telescope").load_extension("undo")
+		end,
+    },
 })
 
-require'lspconfig'.pylsp.setup{}
+require("glow").setup({
+    style = "dark",
 
--- require 'nvim-treesitter.install'.compilers = { "gcc" }
+})
+
+require("toggleterm").setup({
+    size = function(term)
+        if term.direction == "horizontal" then
+            return 15
+        elseif term.direction == "vertical" then
+            return vim.o.columns * 0.4
+        end
+    end,
+    open_mapping = [[<c-\>]],
+    hide_numbers = true,
+    insert_mappings = true, -- whether or not the open mapping applies in insert mode
+    terminal_mappings = true, -- whether or not the open mapping applies in the opened terminals
+    shell = vim.o.shell,
+    auto_scroll = true,
+    start_in_insert = true,
+    persist_size =true,
+    close_on_exit = true,
+    -- autochdir = true,
+    winbar = {
+        enabled = false,
+        name_formatter = function(term) --  term: Terminal
+            return term.name
+        end,
+    },
+})
+
+require("focus").setup({
+    enable = true, -- Enable module
+    commands = true, -- Create Focus commands
+    autoresize = {
+        enable = true, -- Enable or disable auto-resizing of splits
+        width = 0, -- Force width for the focused window
+        height = 0, -- Force height for the focused window
+        minwidth = 0, -- Force minimum width for the unfocused window
+        minheight = 0, -- Force minimum height for the unfocused window
+        height_quickfix = 10, -- Set the height of quickfix panel
+    },
+    split = {
+        bufnew = false, -- Create blank buffer for new split windows
+        tmux = false, -- Create tmux splits instead of neovim splits
+    },
+    ui = {
+        number = false, -- Display line numbers in the focussed window only
+        relativenumber = false, -- Display relative line numbers in the focussed window only
+        hybridnumber = false, -- Display hybrid line numbers in the focussed window only
+        absolutenumber_unfocussed = false, -- Preserve absolute numbers in the unfocussed windows
+
+        cursorline = true, -- Display a cursorline in the focussed window only
+        cursorcolumn = false, -- Display cursorcolumn in the focussed window only
+        colorcolumn = {
+            enable = false, -- Display colorcolumn in the foccused window only
+            list = '+1', -- Set the comma-saperated list for the colorcolumn
+        },
+        signcolumn = true, -- Display signcolumn in the focussed window only
+        winhighlight = false, -- Auto highlighting for focussed/unfocussed windows
+    }
+})
+
+local navic = require("nvim-navic")
+
+navic.setup {
+      lsp = {
+	auto_attach = true,
+	preference = nil,
+      },
+      highlight = false,
+      separator = " > ",
+      depth_limit = 0,
+      depth_limit_indicator = "..",
+      safe_output = true,
+      lazy_update_context = false,
+      click = false,
+      format_text = function(text)
+	return text
+      end,
+}
+
+require'lspconfig'.pylsp.setup({})
 
 local builtin = require('telescope.builtin')
 vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
@@ -116,55 +257,55 @@ require("marks").setup({
 		sign = "#",
 		virt_text = "hello world",
 		annotate = false,
-      	},
-      mappings = {}
+    },
+    mappings = {},
 })
 
 require('lualine').setup {
-options = {
-	icons_enabled = true,
-	theme = 'auto',
-	component_separators = {
-		left = '', 
-		right = ''
+	options = {
+		icons_enabled = true,
+		theme = 'auto',
+		component_separators = {
+			left = '', 
+			right = ''
+		},
+		section_separators = {
+			left = '',
+			right = ''
+		},
+		disabled_filetypes = {
+			statusline = {},
+			winbar = {},
+		},
+		ignore_focus = {},
+		always_divide_middle = true,
+		globalstatus = false,
+		refresh = {
+			statusline = 1000,
+			tabline = 1000,
+			winbar = 1000,
+		}
 	},
-	section_separators = {
-		left = '',
-		right = ''
+	sections = {
+		lualine_a = {'mode'},
+		lualine_b = {'branch', 'diff', 'diagnostics'},
+		lualine_c = {'filename'},
+		lualine_x = {'encoding', 'fileformat', 'filetype'},
+		lualine_y = {'progress'},
+		lualine_z = {'location'}
 	},
-	disabled_filetypes = {
-		statusline = {},
-		winbar = {},
+	inactive_sections = {
+		lualine_a = {},
+		lualine_b = {},
+		lualine_c = {'filename'},
+		lualine_x = {'location'},
+		lualine_y = {},
+		lualine_z = {}
 	},
-	ignore_focus = {},
-	always_divide_middle = true,
-	globalstatus = false,
-	refresh = {
-		statusline = 1000,
-		tabline = 1000,
-		winbar = 1000,
-	}
-},
-sections = {
-	lualine_a = {'mode'},
-	lualine_b = {'branch', 'diff', 'diagnostics'},
-	lualine_c = {'filename'},
-	lualine_x = {'encoding', 'fileformat', 'filetype'},
-	lualine_y = {'progress'},
-	lualine_z = {'location'}
-},
-inactive_sections = {
-	lualine_a = {},
-	lualine_b = {},
-	lualine_c = {'filename'},
-	lualine_x = {'location'},
-	lualine_y = {},
-	lualine_z = {}
-},
-tabline = {},
-winbar = {},
-inactive_winbar = {},
-extensions = {}
+	tabline = {},
+	winbar = {},
+	inactive_winbar = {},
+	extensions = {}
 }
 
 local rt = require("rust-tools")
@@ -180,75 +321,26 @@ rt.setup({
 	},
 })
 
+rt.inlay_hints.enable()
+
 local nvim_lsp = require('lspconfig')
 
 local on_attach = function(client)
-    require('completion').on_attach(client)
+      require('completion').on_attach(client)
 end
 
-vim.opt.background = "dark" -- default to dark or light style
+-- settings:
+vim.opt.number = true
+vim.opt.relativenumber = true
+vim.cmd([[set mouse=a]])
+vim.opt.wrap = true
+vim.opt.linebreak = true
+vim.opt.shiftwidth = 4
+vim.opt.tabstop = 4
+vim.opt.signcolumn = "number"
+vim.opt.expandtab = true
 
-require("monokai-nightasty").setup({
-    dark_style_background = "transparent", -- default, dark, transparent, #color
-    light_style_background = "default", -- default, dark, transparent, #color
-    terminal_colors = true, -- Set the colors used when opening a `:terminal`
-    color_headers = true, -- Enable header colors for each header level (h1, h2, etc.)
-    hl_styles = {
-        -- Style to be applied to different syntax groups. See `:help nvim_set_hl`
-        comments = { italic = false },
-        keywords = { italic = false },
-        functions = { italic = false },
-        variables = { italic = false },
-        -- Background styles for sidebars (panels) and floating windows:
-        floats = "default", -- default, dark, transparent
-        sidebars = "default", -- default, dark, transparent
-    },
-    sidebars = { "qf", "help" }, -- Set a darker background on sidebar-like windows. For example: `["qf", "vista_kind", "terminal", "packer"]`
-
-    hide_inactive_statusline = false, -- Hide inactive statuslines and replace them with a thin border instead. Should work with the standard **StatusLine** and **LuaLine**.
-    dim_inactive = false, -- dims inactive windows
-    lualine_bold = true, -- Lualine headers will be bold or regular.
-    lualine_style = "dark", -- "dark", "light" or "default" (Follows dark/light style)
-
-    --- You can override specific color/highlights. Current values in `extras/palettes`
-
-    ---@param colors ColorScheme
-    on_colors = function(colors)
-        colors.border = colors.grey
-        colors.comment = "#2d7e79"
-    end,
-
-    ---@param highlights Highlights
-    ---@param colors ColorScheme
-    on_highlights = function(highlights, colors)
-        highlights.TelescopeNormal = { fg = colors.magenta, bg = colors.charcoal }
-        highlights.WinSeparator = { fg = colors.grey }
-    end,
-})
-
--- Toggle Dark/Light styles
-vim.keymap.set(
-    {"n", "v"}, "<leader>tl", "<CMD>MonokaiToggleLight<CR>",
-    {silent = true, desc = "Monokai-NighTasty: Toggle light/dark theme"}
-)
-
-vim.cmd([[colorscheme monokai-nightasty]])
 vim.cmd([[
-" COLORSCHEMES:
-
-""" colorscheme molokai
-" set background=dark
-" colorscheme iceberg
-" colorscheme blackops
-
-" SETTINGS:
-
-set number
-set relativenumber
-set mouse=a
-set wrap
-set linebreak
-
 autocmd vimenter * if !argc() | NERDTree | endif
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif  
 
@@ -269,8 +361,8 @@ vim.keymap.set("n", "J", "mzJ`z")
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
 
-vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
-vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
+vim.keymap.set("v", "J", ":m '>+1<CR>gv = gv")
+vim.keymap.set("v", "K", ":m '<-2<CR>gv = gv")
 
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 
@@ -287,200 +379,201 @@ vim.keymap.set("n", "<C-j>", "jzz")
 -- vim.keymap.set("n", "<leader>j", "<cmd>lprev<CR>zz")
 
 nvim_lsp.rust_analyzer.setup({
-    on_attach = on_attach,
-    settings = {
+      on_attach = on_attach,
+      settings = {
 	["rust-analyzer"] = {
-	    imports = {
+	      imports = {
 			granularity = {
-			    group = "module",
+			   group = "module",
 			},
 			prefix = "self",
 	    	},
 	    	cargo = {
 			buildScripts = {
-			    enable = true,
+			   enable = true,
 			},
 	    	},
 	    	procMacro = {
-				enable = true
+			enable = true
 	    	},
-		}
-    }
+	}
+      }
 })
 
-local opts = {
-  tools = { -- rust-tools options
+local rtopts = {
+    tools = { -- rust-tools options
 
-    -- how to execute terminal commands
-    -- options right now: termopen / quickfix / toggleterm / vimux
-    executor = require("rust-tools.executors").termopen,
+      -- how to execute terminal commands
+      -- options right now: termopen / quickfix / toggleterm / vimux
+      executor = require("rust-tools.executors").termopen,
 
-    -- callback to execute once rust-analyzer is done initializing the workspace
-    -- The callback receives one parameter indicating the `health` of the server: "ok" | "warning" | "error"
-    on_initialized = nil,
+      -- callback to execute once rust-analyzer is done initializing the workspace
+      -- The callback receives one parameter indicating the `health` of the server: "ok" | "warning" | "error"
+      on_initialized = nil,
 
-    -- automatically call RustReloadWorkspace when writing to a Cargo.toml file.
-    reload_workspace_from_cargo_toml = true,
+      -- automatically call RustReloadWorkspace when writing to a Cargo.toml file.
+      reload_workspace_from_cargo_toml = true,
 
-    -- These apply to the default RustSetInlayHints command
-    inlay_hints = {
-      -- automatically set inlay hints (type hints)
-      -- default: true
-      auto = true,
+      -- These apply to the default RustSetInlayHints command
+      inlay_hints = {
+        -- automatically set inlay hints (type hints)
+        -- default: true
+        auto = true,
 
-      -- Only show inlay hints for the current line
-      only_current_line = false,
+        -- Only show inlay hints for the current line
+        only_current_line = false,
 
-      -- whether to show parameter hints with the inlay hints or not
-      -- default: true
-      show_parameter_hints = true,
+        -- whether to show parameter hints with the inlay hints or not
+        -- default: true
+        show_parameter_hints = true,
 
-      -- prefix for parameter hints
-      -- default: "<-"
-      parameter_hints_prefix = "<- ",
+        -- prefix for parameter hints
+        -- default: "<-"
+        parameter_hints_prefix = " <- ",
 
-      -- prefix for all the other hints (type, chaining)
-      -- default: "=>"
-      other_hints_prefix = "=> ",
+        -- prefix for all the other hints (type, chaining)
+        -- default: " = >"
+        other_hints_prefix = " => ",
 
-      -- whether to align to the length of the longest line in the file
-      max_len_align = false,
+        -- whether to align to the length of the longest line in the file
+        max_len_align = false,
 
-      -- padding from the left if max_len_align is true
-      max_len_align_padding = 1,
+        -- padding from the left if max_len_align is true
+        max_len_align_padding = 1,
 
-      -- whether to align to the extreme right or not
-      right_align = false,
+        -- whether to align to the extreme right or not
+        right_align = false,
 
-      -- padding from the right if right_align is true
-      right_align_padding = 7,
+        -- padding from the right if right_align is true
+        right_align_padding = 7,
 
-      -- The color of the hints
-      highlight = "Comment",
-    },
-
-    -- options same as lsp hover / vim.lsp.util.open_floating_preview()
-    hover_actions = {
-
-      -- the border that is used for the hover window
-      -- see vim.api.nvim_open_win()
-      border = {
-        { "╭", "FloatBorder" },
-        { "─", "FloatBorder" },
-        { "╮", "FloatBorder" },
-        { "│", "FloatBorder" },
-        { "╯", "FloatBorder" },
-        { "─", "FloatBorder" },
-        { "╰", "FloatBorder" },
-        { "│", "FloatBorder" },
+        -- The color of the hints
+        highlight = "Comment",
       },
 
-      -- Maximal width of the hover window. Nil means no max.
-      max_width = nil,
+      -- options same as lsp hover / vim.lsp.util.open_floating_preview()
+      hover_actions = {
 
-      -- Maximal height of the hover window. Nil means no max.
-      max_height = nil,
+        -- the border that is used for the hover window
+        -- see vim.api.nvim_open_win()
+        border = {
+        	{ "╭", "FloatBorder" },
+        	{ "─", "FloatBorder" },
+        	{ "╮", "FloatBorder" },
+        	{ "│", "FloatBorder" },
+        	{ "╯", "FloatBorder" },
+        	{ "─", "FloatBorder" },
+        	{ "╰", "FloatBorder" },
+        	{ "│", "FloatBorder" },
+        },
 
-      -- whether the hover action window gets automatically focused
-      -- default: false
-      auto_focus = false,
-    },
+        -- Maximal width of the hover window. Nil means no max.
+        max_width = nil,
 
-    -- settings for showing the crate graph based on graphviz and the dot
-    -- command
-    crate_graph = {
-      -- Backend used for displaying the graph
-      -- see: https://graphviz.org/docs/outputs/
-      -- default: x11
-      backend = "x11",
-      -- where to store the output, nil for no output stored (relative
-      -- path from pwd)
-      -- default: nil
-      output = nil,
-      -- true for all crates.io and external crates, false only the local
-      -- crates
-      -- default: true
-      full = true,
+        -- Maximal height of the hover window. Nil means no max.
+        max_height = nil,
 
-      -- List of backends found on: https://graphviz.org/docs/outputs/
-      -- Is used for input validation and autocompletion
-      -- Last updated: 2021-08-26
-      enabled_graphviz_backends = {
-        "bmp",
-        "cgimage",
-        "canon",
-        "dot",
-        "gv",
-        "xdot",
-        "xdot1.2",
-        "xdot1.4",
-        "eps",
-        "exr",
-        "fig",
-        "gd",
-        "gd2",
-        "gif",
-        "gtk",
-        "ico",
-        "cmap",
-        "ismap",
-        "imap",
-        "cmapx",
-        "imap_np",
-        "cmapx_np",
-        "jpg",
-        "jpeg",
-        "jpe",
-        "jp2",
-        "json",
-        "json0",
-        "dot_json",
-        "xdot_json",
-        "pdf",
-        "pic",
-        "pct",
-        "pict",
-        "plain",
-        "plain-ext",
-        "png",
-        "pov",
-        "ps",
-        "ps2",
-        "psd",
-        "sgi",
-        "svg",
-        "svgz",
-        "tga",
-        "tiff",
-        "tif",
-        "tk",
-        "vml",
-        "vmlz",
-        "wbmp",
-        "webp",
-        "xlib",
-        "x11",
+        -- whether the hover action window gets automatically focused
+        -- default: false
+        auto_focus = false,
+      },
+
+      -- settings for showing the crate graph based on graphviz and the dot
+      -- command
+      crate_graph = {
+        -- Backend used for displaying the graph
+        -- see: https://graphviz.org/docs/outputs/
+        -- default: x11
+        backend = "x11",
+        -- where to store the output, nil for no output stored (relative
+        -- path from pwd)
+        -- default: nil
+        output = nil,
+        -- true for all crates.io and external crates, false only the local
+        -- crates
+        -- default: true
+        full = true,
+
+        -- List of backends found on: https://graphviz.org/docs/outputs/
+        -- Is used for input validation and autocompletion
+        -- Last updated: 2021-08-26
+        enabled_graphviz_backends = {
+          "bmp",
+          "cgimage",
+          "canon",
+          "dot",
+          "gv",
+          "xdot",
+          "xdot1.2",
+          "xdot1.4",
+          "eps",
+          "exr",
+          "fig",
+          "gd",
+          "gd2",
+          "gif",
+          "gtk",
+          "ico",
+          "cmap",
+          "ismap",
+          "imap",
+          "cmapx",
+          "imap_np",
+          "cmapx_np",
+          "jpg",
+          "jpeg",
+          "jpe",
+          "jp2",
+          "json",
+          "json0",
+          "dot_json",
+          "xdot_json",
+          "pdf",
+          "pic",
+          "pct",
+          "pict",
+          "plain",
+          "plain-ext",
+          "png",
+          "pov",
+          "ps",
+          "ps2",
+          "psd",
+          "sgi",
+          "svg",
+          "svgz",
+          "tga",
+          "tiff",
+          "tif",
+          "tk",
+          "vml",
+          "vmlz",
+          "wbmp",
+          "webp",
+          "xlib",
+          "x11",
+        },
       },
     },
-  },
 
-  -- all the opts to send to nvim-lspconfig
-  -- these override the defaults set by rust-tools.nvim
-  -- see https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#rust_analyzer
-  server = {
-    -- standalone file support
-    -- setting it to false may improve startup time
-    standalone = true,
-  }, -- rust-analyzer options
+    -- all the opts to send to nvim-lspconfig
+    -- these override the defaults set by rust-tools.nvim
+    -- see https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#rust_analyzer
+    server = {
+      -- standalone file support
+      -- setting it to false may improve startup time
+      standalone = true,
+    }, -- rust-analyzer options
 
-  -- debugging stuff
-  dap = {
-    adapter = {
-      type = "executable",
-      command = "lldb-vscode",
-      name = "rt_lldb",
+    -- debugging stuff
+    dap = {
+      adapter = {
+        type = "executable",
+        command = "lldb-vscode",
+        name = "rt_lldb",
+      },
     },
-  },
 }
 
-require('rust-tools').setup(opts)
+require('rust-tools').setup(rtopts)
+
