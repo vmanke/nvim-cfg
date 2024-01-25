@@ -26,12 +26,12 @@
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
     vim.fn.system({
-      "git",
-      "clone",
-      "--filter = blob:none",
-      "https://github.com/folke/lazy.nvim.git",
-      "--branch = stable", -- latest stable release
-      lazypath,
+        "git",
+        "clone",
+        "--filter=blob:none",
+        "https://github.com/folke/lazy.nvim.git",
+        "--branch=stable", -- latest stable release
+        lazypath,
     })
 end
 vim.opt.rtp:prepend(lazypath)
@@ -146,6 +146,14 @@ require("lazy").setup({
 			require("telescope").setup(opts)
 			require("telescope").load_extension("undo")
 		end,
+    },
+    {
+        "nvim-tree/nvim-tree.lua",
+        version = "*",
+        lazy = false,
+        dependencies = {
+            "nvim-tree/nvim-web-devicons",
+        },
     },
 })
 
@@ -323,6 +331,15 @@ rt.setup({
 
 rt.inlay_hints.enable()
 
+require("nvim-tree").setup({
+    sync_root_with_cwd = true,
+    respect_buf_cwd = true,
+    update_focused_file = {
+        enable = true,
+        update_root = true
+    },
+})
+
 local nvim_lsp = require('lspconfig')
 
 local on_attach = function(client)
@@ -332,19 +349,25 @@ end
 -- settings:
 vim.opt.number = true
 vim.opt.relativenumber = true
-vim.cmd([[set mouse=a]])
+vim.cmd([[
+    set mouse=a
+    set backspace=indent,eol,start
+]])
 vim.opt.wrap = true
 vim.opt.linebreak = true
 vim.opt.shiftwidth = 4
 vim.opt.tabstop = 4
 vim.opt.signcolumn = "number"
 vim.opt.expandtab = true
+vim.opt.autoindent = true
 
 vim.cmd([[
-autocmd vimenter * if !argc() | NERDTree | endif
+" autocmd vimenter * if !argc() | NERDTree | endif
+" autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif  
+autocmd vimenter * if !argc() | NvimTreeToggle | endif
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif  
 
-map <C-n> :NERDTreeToggle<CR>
+" map <C-n> :NERDTreeToggle<CR>
 map <C-c> "*y
 map <C-v> "*p
 cmap <C-V> <C-R>+
@@ -353,6 +376,8 @@ noremap <C-Q> <C-V>
 
 nnoremap , :
 vnoremap , :
+
+nnoremap <leader>vd <cmd>vsplit term://visidata <cfile><CR>
 ]])
 
 vim.keymap.set("n", "<C-d>", "<C-d>zz")
@@ -375,6 +400,14 @@ vim.keymap.set("n", "<leader>f", vim.lsp.buf.format)
 
 vim.keymap.set("n", "<C-k>", "kzz")
 vim.keymap.set("n", "<C-j>", "jzz")
+
+-- vim.keymap.set("n", "<C-n>", "<cmd>NERDTreeToggle<CR>")
+-- vim.keymap.set("n", "<leader>n", "<cmd>NERDTreeToggle<CR>")
+-- vim.keymap.set("v", "<leader>n", "<cmd>NERDTreeToggle<CR>")
+vim.keymap.set("n", "<C-n>", "<cmd>NvimTreeToggle<CR>")
+vim.keymap.set("n", "<leader>n", "<cmd>NvimTreeToggle<CR>")
+vim.keymap.set("v", "<leader>n", "<cmd>NvimTreeToggle<CR>")
+
 -- vim.keymap.set("n", "<leader>k", "<cmd>lnext<CR>zz")
 -- vim.keymap.set("n", "<leader>j", "<cmd>lprev<CR>zz")
 
