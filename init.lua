@@ -1,5 +1,36 @@
 if vim.g.vscode then
-    -- 
+    vim.g.mapleader = " "
+    vim.cmd([[
+    map <C-c> "*y
+    map <C-v> "*p
+    cmap <C-V> <C-R>+
+    imap <C-V> <C-r><C-P>+
+    noremap <C-Q> <C-V>
+
+    nnoremap , :
+    vnoremap , :
+
+    nnoremap <leader>vd <cmd>vsplit term://visidata <cfile><CR>
+    ]])
+
+    vim.keymap.set("n", "<C-d>", "<C-d>zz")
+    vim.keymap.set("n", "<C-u>", "<C-u>zz")
+    vim.keymap.set("n", "J", "mzJ`z")
+    vim.keymap.set("n", "n", "nzzzv")
+    vim.keymap.set("n", "N", "Nzzzv")
+
+    vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
+    vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
+
+    vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
+
+    vim.keymap.set("x", "<leader>p", [["_dP]])
+    vim.keymap.set({"n", "v"}, "<leader>y", [["+y]])
+    vim.keymap.set("n", "<leader>Y", [["+Y]])
+    vim.keymap.set({"n", "v"}, "<leader>d", [["_d]])
+
+    vim.keymap.set("n", "<C-k>", "kzz")
+    vim.keymap.set("n", "<C-j>", "jzz")
 else    
     local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
     if not vim.loop.fs_stat(lazypath) then
@@ -38,6 +69,7 @@ else
                 vim.fn["mkdp#util#install"]()
             end,
         },
+        -- "vijaymarupudi/nvim-fzf",
         {
             "ellisonleao/glow.nvim", 
             config = true,
@@ -127,14 +159,129 @@ else
             end,
         },
         {
-            "nvim-tree/nvim-tree.lua",
-            version = "*",
-            lazy = false,
-            dependencies = {
-                "nvim-tree/nvim-web-devicons",
-            },
+           "nvim-tree/nvim-tree.lua",
+           version = "*",
+           lazy = false,
+           dependencies = {
+               "nvim-tree/nvim-web-devicons",
+           },
         },
+        {
+            'mrcjkb/rustaceanvim',
+            version = '^4', -- Recommended
+            ft = { 'rust' },
+        },
+        {
+		    'akinsho/flutter-tools.nvim',
+		    lazy = false,
+		    dependencies = {
+		        'nvim-lua/plenary.nvim',
+		        'stevearc/dressing.nvim', -- optional for vim.ui.select
+		    },
+		    config = true,
+		},
     })
+
+--    local fzf = require("fzf")
+--
+--    coroutine.wrap(function()
+--        local result = fzf.fzf({"choice 1", "choice 2"})
+--        if result then
+--            print(result[1])
+--        end
+--    end)()
+
+    -- flutter:
+    
+    
+	-- alternatively you can override the default configs
+	require("flutter-tools").setup({
+	    ui = {
+	      	-- the border type to use for all floating windows, the same options/formats
+	      	-- used for ":h nvim_open_win" e.g. "single" | "shadow" | {<table-of-eight-chars>}
+	      	border = "rounded",
+	      	-- This determines whether notifications are show with `vim.notify` or with the plugin's custom UI
+	      	-- please note that this option is eventually going to be deprecated and users will need to
+	      	-- depend on plugins like `nvim-notify` instead.
+	      	notification_style = 'native'
+	    },
+	    decorations = {
+	      	statusline = {
+	      	  -- set to true to be able use the 'flutter_tools_decorations.app_version' in your statusline
+	      	  -- this will show the current version of the flutter app from the pubspec.yaml file
+	      	  app_version = false,
+	      	  -- set to true to be able use the 'flutter_tools_decorations.device' in your statusline
+	      	  -- this will show the currently running device if an application was started with a specific
+	      	  -- device
+	      	  device = false,
+	      	  -- set to true to be able use the 'flutter_tools_decorations.project_config' in your statusline
+	      	  -- this will show the currently selected project configuration
+	      	  project_config = false,
+	      	}
+	    },
+	    debugger = { -- integrate with nvim dap + install dart code debugger
+	      	enabled = false,
+	      	run_via_dap = false, -- use dap instead of a plenary job to run flutter apps
+	      	-- if empty dap will not stop on any exceptions, otherwise it will stop on those specified
+	      	-- see |:help dap.set_exception_breakpoints()| for more info
+	      	exception_breakpoints = {},
+	    },
+	    flutter_path = "C:\\FlutterSDK\\flutter\\bin\\flutter", -- <-- this takes priority over the lookup
+	    -- flutter_lookup_cmd = "which flutter", -- example "dirname $(which flutter)" or "asdf where flutter"
+	    root_patterns = { ".git", "pubspec.yaml" }, -- patterns to find the root of your flutter project
+	    fvm = false, -- takes priority over path, uses <workspace>/.fvm/flutter_sdk if enabled
+	    widget_guides = {
+	      	enabled = false,
+	    },
+	    closing_tags = {
+	      	highlight = "ErrorMsg", -- highlight for the closing tag
+	      	prefix = ">", -- character to use for close tag e.g. > Widget
+	      	enabled = true -- set to false to disable
+	    },
+	    dev_log = {
+	      	enabled = true,
+	      	notify_errors = false, -- if there is an error whilst running then notify the user
+	      	open_cmd = "tabedit", -- command to use to open the log buffer
+	    },
+	    dev_tools = {
+	      	autostart = false, -- autostart devtools server if not detected
+	      	auto_open_browser = false, -- Automatically opens devtools in the browser
+	    },
+	    outline = {
+	      	open_cmd = "30vnew", -- command to use to open the outline buffer
+	      	auto_open = false -- if true this will open the outline automatically when it is first populated
+	    },
+	    lsp = {
+	      	color = { -- show the derived colours for dart variables
+	      		enabled = false, -- whether or not to highlight color variables at all, only supported on flutter >= 2.10
+	      		background = false, -- highlight the background
+	      		background_color = nil, -- required, when background is transparent (i.e. background_color = { r = 19, g = 17, b = 24},)
+	      		foreground = false, -- highlight the foreground
+	      		virtual_text = true, -- show the highlight using virtual text
+	      		virtual_text_str = "■", -- the virtual text character to highlight
+	      	},
+	      	-- see the link below for details on each option:
+	      	-- https://github.com/dart-lang/sdk/blob/master/pkg/analysis_server/tool/lsp_spec/README.md#client-workspace-configuration
+	      	settings = {
+	      	  	showTodos = true,
+	      	  	completeFunctionCalls = true,
+	      	  	renameFilesWithClasses = "prompt", -- "always"
+	      	  	enableSnippets = true,
+	      	  	updateImportsOnRename = true, -- Whether to update imports and other directives when files are renamed. Required for `FlutterRename` command.
+	      	}
+	    }
+	})
+
+    vim.cmd([[
+    	 " Show hover
+		nnoremap K <Cmd>lua vim.lsp.buf.hover()<CR>
+		 " Jump to definition
+		nnoremap gd <Cmd>lua vim.lsp.buf.definition()<CR>
+		 " Open code actions using the default lsp UI, if you want to change this please see the plugins above
+		nnoremap <leader>ca <Cmd>lua vim.lsp.buf.code_action()<CR>
+		 " Open code actions for the selected visual range
+		xnoremap <leader>ca <Cmd>lua vim.lsp.buf.range_code_action()<CR>
+    ]])
 
     require("glow").setup({
         style = "dark",
@@ -345,6 +492,7 @@ else
                 vim.keymap.set("n", "<C-space>", rt.hover_actions.hover_actions, { buffer = bufnr })
                 -- Code action groups
                 vim.keymap.set("n", "<Leader>a", rt.code_action_group.code_action_group, { buffer = bufnr })
+                vim.keymap.set("n", "<Leader>g", rt.crate_graph.crate_graph, { buffer = bufnr })
             end,
         },
     })
@@ -352,12 +500,12 @@ else
     rt.inlay_hints.enable()
 
     require("nvim-tree").setup({
-        sync_root_with_cwd = true,
-        respect_buf_cwd = true,
-        update_focused_file = {
-            enable = true,
-            update_root = true
-        },
+       sync_root_with_cwd = true,
+       respect_buf_cwd = true,
+       update_focused_file = {
+           enable = true,
+           update_root = true
+       },
     })
 
     local nvim_lsp = require('lspconfig')
@@ -382,10 +530,10 @@ else
     vim.opt.autoindent = true
 
     vim.cmd([[
-    " autocmd vimenter * if !argc() | NERDTree | endif
-    " autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif  
-    autocmd vimenter * if !argc() | NvimTreeToggle | endif
+    autocmd vimenter * if !argc() | NERDTree | endif
     autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif  
+    " autocmd vimenter * if !argc() | NvimTreeToggle | endif
+    " autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif  
 
     " map <C-n> :NERDTreeToggle<CR>
     map <C-c> "*y
@@ -421,39 +569,42 @@ else
     vim.keymap.set("n", "<C-k>", "kzz")
     vim.keymap.set("n", "<C-j>", "jzz")
 
-    -- vim.keymap.set("n", "<C-n>", "<cmd>NERDTreeToggle<CR>")
-    -- vim.keymap.set("n", "<leader>n", "<cmd>NERDTreeToggle<CR>")
-    -- vim.keymap.set("v", "<leader>n", "<cmd>NERDTreeToggle<CR>")
-    vim.keymap.set("n", "<C-n>", "<cmd>NvimTreeToggle<CR>")
-    vim.keymap.set("n", "<leader>n", "<cmd>NvimTreeToggle<CR>")
-    vim.keymap.set("v", "<leader>n", "<cmd>NvimTreeToggle<CR>")
+    vim.keymap.set("n", "<C-n>", "<cmd>NERDTreeToggle<CR>")
+    vim.keymap.set("n", "<leader>n", "<cmd>NERDTreeToggle<CR>")
+    vim.keymap.set("v", "<leader>n", "<cmd>NERDTreeToggle<CR>")
+    -- vim.keymap.set("n", "<C-n>", "<cmd>NvimTreeToggle<CR>")
+    -- vim.keymap.set("n", "<leader>n", "<cmd>NvimTreeToggle<CR>")
+    -- vim.keymap.set("v", "<leader>n", "<cmd>NvimTreeToggle<CR>")
 
     vim.keymap.set("n", "<leader>m", "<cmd>MarkdownPreview<CR>")
 
     -- vim.keymap.set("n", "<leader>k", "<cmd>lnext<CR>zz")
     -- vim.keymap.set("n", "<leader>j", "<cmd>lprev<CR>zz")
+    
+    vim.keymap.set("n", "<leader>s", ":wa<Bar>exe 'mksession! .nvim_sessions/session.vim'<CR>") -- .. v:this_session<CR>:so ~/.nvim_sessions/")
+    vim.keymap.set("n", "<leader>S", ":so .nvim_sessions/session.vim<CR>")
 
-    nvim_lsp.rust_analyzer.setup({
-          on_attach = on_attach,
-          settings = {
-        ["rust-analyzer"] = {
-              imports = {
-                granularity = {
-                   group = "module",
-                },
-                prefix = "self",
-                },
-                cargo = {
-                buildScripts = {
-                   enable = true,
-                },
-                },
-                procMacro = {
-                enable = true
-                },
-        }
-          }
-    })
+--    nvim_lsp.rust_analyzer.setup({
+--          on_attach = on_attach,
+--          settings = {
+--        ["rust-analyzer"] = {
+--              imports = {
+--                granularity = {
+--                   group = "module",
+--                },
+--                prefix = "self",
+--                },
+--                cargo = {
+--                buildScripts = {
+--                   enable = true,
+--                },
+--                },
+--                procMacro = {
+--                enable = true
+--                },
+--        }
+--          }
+--    })
 
     local rtopts = {
         tools = { -- rust-tools options
@@ -543,7 +694,7 @@ else
             -- where to store the output, nil for no output stored (relative
             -- path from pwd)
             -- default: nil
-            output = nil,
+            output = ".graph/",
             -- true for all crates.io and external crates, false only the local
             -- crates
             -- default: true
@@ -630,6 +781,6 @@ else
         },
     }
 
-    require('rust-tools').setup(rtopts)
+    -- require('rust-tools').setup(rtopts)
 end
 
