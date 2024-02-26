@@ -546,6 +546,7 @@ else
     vim.keymap.set('n', '<leader>fw', builtin.grep_string, { desc = "Find Word under Cursor"})
     vim.keymap.set('n', '<leader>gc', builtin.git_commits, { desc = "Search Git Commits"})
     vim.keymap.set('n', '<leader>gb', builtin.git_bcommits, { desc = "Search Git Commits for Buffer"})
+    vim.keymap.set('n', '<leader>fp', ":Telescope projects<CR>", { desc = "Search projects"})
 
     -- -----------------------------------------------------------------------------------------------------
 
