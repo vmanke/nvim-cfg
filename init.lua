@@ -79,6 +79,7 @@ else
             "nvim-focus/focus.nvim",
             version = false,
         },
+        "neovim/nvim-lspconfig",
         "nvim-tree/nvim-web-devicons",
         {
             "SmiteshP/nvim-navic",
@@ -98,7 +99,6 @@ else
         "tomasr/molokai",
         "cocopon/iceberg.vim",
         "preservim/nerdtree",
-        "neovim/nvim-lspconfig",
         "simrat39/rust-tools.nvim",
         "chentoast/marks.nvim",
         {
@@ -112,7 +112,7 @@ else
             tag = '0.1.5',
             dependencies = {
                 'nvim-lua/plenary.nvim'
-            }
+            },          
         },
         {
             "utilyre/barbecue.nvim",
@@ -130,24 +130,24 @@ else
             "debugloop/telescope-undo.nvim",
             dependencies = { -- note how they're inverted to above example
                 {
-                  "nvim-telescope/telescope.nvim",
-                  dependencies = { "nvim-lua/plenary.nvim" },
+                    "nvim-telescope/telescope.nvim",
+                    dependencies = { "nvim-lua/plenary.nvim" },
                 },
             },
             keys = {
                 { -- lazy style key map
-                  "<leader>u",
-                  "<cmd>Telescope undo<cr>",
-                  desc = "undo history",
+                    "<leader>u",
+                    "<cmd>Telescope undo<cr>",
+                    desc = "undo history",
                 },
             },
             opts = {
                 -- don't use `defaults = { }` here, do this in the main telescope spec
                 extensions = {
-                  undo = {
+                    undo = {
                     -- telescope-undo.nvim config, see below
-                  },
-                  -- no other extensions here, they can have their own spec too
+                    },
+                    -- no other extensions here, they can have their own spec too
                 },
             },
             config = function(_, opts)
@@ -159,12 +159,16 @@ else
             end,
         },
         {
-           "nvim-tree/nvim-tree.lua",
-           version = "*",
-           lazy = false,
-           dependencies = {
-               "nvim-tree/nvim-web-devicons",
-           },
+            "nvim-treesitter/nvim-treesitter",
+            build = ":TSUpdate",
+        },
+        {
+            "nvim-tree/nvim-tree.lua",
+            version = "*",
+            lazy = false,
+            dependencies = {
+                "nvim-tree/nvim-web-devicons",
+            },
         },
         {
             'mrcjkb/rustaceanvim',
@@ -172,14 +176,112 @@ else
             ft = { 'rust' },
         },
         {
-		    'akinsho/flutter-tools.nvim',
-		    lazy = false,
-		    dependencies = {
-		        'nvim-lua/plenary.nvim',
-		        'stevearc/dressing.nvim', -- optional for vim.ui.select
-		    },
-		    config = true,
+		      'akinsho/flutter-tools.nvim',
+		      lazy = false,
+		      dependencies = {
+		          'nvim-lua/plenary.nvim',
+		          'stevearc/dressing.nvim', -- optional for vim.ui.select
+		      },
+		      config = true,
 		},
+        'dcampos/nvim-snippy',
+        {
+            'hrsh7th/nvim-cmp',
+            dependencies = {
+                'neovim/nvim-lspconfig',
+                'hrsh7th/cmp-nvim-lsp',
+                'hrsh7th/cmp-buffer',
+                'hrsh7th/cmp-path',
+                'hrsh7th/cmp-cmdline',
+                'dcampos/nvim-snippy',
+                'dcampos/cmp-snippy',
+            },
+
+        }
+    })
+
+    -- --------------------------------------------------------------------------------
+
+    local cmp = require'cmp'
+
+    cmp.setup({
+        snippet = {
+        -- REQUIRED - you must specify a snippet engine
+        expand = function(args)
+            -- vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
+            -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+            require('snippy').expand_snippet(args.body) -- For `snippy` users.
+            -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
+        end,
+        },
+        window = {
+        -- completion = cmp.config.window.bordered(),
+        -- documentation = cmp.config.window.bordered(),
+        },
+        mapping = cmp.mapping.preset.insert({
+        ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+        ['<C-f>'] = cmp.mapping.scroll_docs(4),
+        ['<C-Space>'] = cmp.mapping.complete(),
+        ['<C-e>'] = cmp.mapping.abort(),
+        ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+        }),
+        sources = cmp.config.sources({
+        { name = 'nvim_lsp' },
+        { name = 'vsnip' }, -- For vsnip users.
+        -- { name = 'luasnip' }, -- For luasnip users.
+        -- { name = 'ultisnips' }, -- For ultisnips users.
+        -- { name = 'snippy' }, -- For snippy users.
+        }, {
+        { name = 'buffer' },
+        })
+    })
+
+    -- Set configuration for specific filetype.
+    cmp.setup.filetype('gitcommit', {
+        sources = cmp.config.sources({
+        { name = 'git' }, -- You can specify the `git` source if [you were installed it](https://github.com/petertriho/cmp-git).
+        }, {
+        { name = 'buffer' },
+        })
+    })
+
+    -- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
+    cmp.setup.cmdline({ '/', '?' }, {
+        mapping = cmp.mapping.preset.cmdline(),
+        sources = {
+        { name = 'buffer' }
+        }
+    })
+
+    -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+    cmp.setup.cmdline(':', {
+        mapping = cmp.mapping.preset.cmdline(),
+        sources = cmp.config.sources({
+        { name = 'path' }
+        }, {
+        { name = 'cmdline' }
+        })
+    })
+
+    -- Set up lspconfig.
+    local capabilities = require('cmp_nvim_lsp').default_capabilities()
+    -- Replace <YOUR_LSP_SERVER> with each lsp server you've enabled.
+    -- require('lspconfig')['<YOUR_LSP_SERVER>'].setup {
+    --     capabilities = capabilities
+    -- }
+
+    -- ---------------------------------------------------------------------
+
+    require('snippy').setup({
+        mappings = {
+            is = {
+                ['<Tab>'] = 'expand_or_advance',
+                ['<S-Tab>'] = 'previous',
+            },
+            nx = {
+                ['<leader>x'] = 'cut_text',
+            },
+        },
     })
 
 --    local fzf = require("fzf")
@@ -196,7 +298,7 @@ else
     
 	-- alternatively you can override the default configs
 	require("flutter-tools").setup({
-	    ui = {
+        ui = {
 	      	-- the border type to use for all floating windows, the same options/formats
 	      	-- used for ":h nvim_open_win" e.g. "single" | "shadow" | {<table-of-eight-chars>}
 	      	border = "rounded",
@@ -204,76 +306,76 @@ else
 	      	-- please note that this option is eventually going to be deprecated and users will need to
 	      	-- depend on plugins like `nvim-notify` instead.
 	      	notification_style = 'native'
-	    },
-	    decorations = {
+       },
+       decorations = {
 	      	statusline = {
-	      	  -- set to true to be able use the 'flutter_tools_decorations.app_version' in your statusline
-	      	  -- this will show the current version of the flutter app from the pubspec.yaml file
-	      	  app_version = false,
-	      	  -- set to true to be able use the 'flutter_tools_decorations.device' in your statusline
-	      	  -- this will show the currently running device if an application was started with a specific
-	      	  -- device
-	      	  device = false,
-	      	  -- set to true to be able use the 'flutter_tools_decorations.project_config' in your statusline
-	      	  -- this will show the currently selected project configuration
-	      	  project_config = false,
+	      	    -- set to true to be able use the 'flutter_tools_decorations.app_version' in your statusline
+	      	    -- this will show the current version of the flutter app from the pubspec.yaml file
+	      	    app_version = false,
+	      	    -- set to true to be able use the 'flutter_tools_decorations.device' in your statusline
+	      	    -- this will show the currently running device if an application was started with a specific
+	      	    -- device
+	      	    device = false,
+	      	    -- set to true to be able use the 'flutter_tools_decorations.project_config' in your statusline
+	      	    -- this will show the currently selected project configuration
+	      	    project_config = false,
 	      	}
-	    },
-	    debugger = { -- integrate with nvim dap + install dart code debugger
+       },
+       debugger = { -- integrate with nvim dap + install dart code debugger
 	      	enabled = false,
 	      	run_via_dap = false, -- use dap instead of a plenary job to run flutter apps
 	      	-- if empty dap will not stop on any exceptions, otherwise it will stop on those specified
 	      	-- see |:help dap.set_exception_breakpoints()| for more info
 	      	exception_breakpoints = {},
-	    },
-	    flutter_path = "C:\\FlutterSDK\\flutter\\bin\\flutter", -- <-- this takes priority over the lookup
-	    -- flutter_lookup_cmd = "which flutter", -- example "dirname $(which flutter)" or "asdf where flutter"
-	    root_patterns = { ".git", "pubspec.yaml" }, -- patterns to find the root of your flutter project
-	    fvm = false, -- takes priority over path, uses <workspace>/.fvm/flutter_sdk if enabled
-	    widget_guides = {
+       },
+       flutter_path = "C:\\FlutterSDK\\flutter\\bin\\flutter", -- <-- this takes priority over the lookup
+       -- flutter_lookup_cmd = "which flutter", -- example "dirname $(which flutter)" or "asdf where flutter"
+       root_patterns = { ".git", "pubspec.yaml" }, -- patterns to find the root of your flutter project
+       fvm = false, -- takes priority over path, uses <workspace>/.fvm/flutter_sdk if enabled
+       widget_guides = {
 	      	enabled = false,
-	    },
-	    closing_tags = {
+       },
+       closing_tags = {
 	      	highlight = "ErrorMsg", -- highlight for the closing tag
 	      	prefix = ">", -- character to use for close tag e.g. > Widget
 	      	enabled = true -- set to false to disable
-	    },
-	    dev_log = {
+       },
+       dev_log = {
 	      	enabled = true,
 	      	notify_errors = false, -- if there is an error whilst running then notify the user
 	      	open_cmd = "tabedit", -- command to use to open the log buffer
-	    },
-	    dev_tools = {
+       },
+       dev_tools = {
 	      	autostart = false, -- autostart devtools server if not detected
 	      	auto_open_browser = false, -- Automatically opens devtools in the browser
-	    },
-	    outline = {
+       },
+       outline = {
 	      	open_cmd = "30vnew", -- command to use to open the outline buffer
 	      	auto_open = false -- if true this will open the outline automatically when it is first populated
-	    },
-	    lsp = {
+       },
+       lsp = {
 	      	color = { -- show the derived colours for dart variables
-	      		enabled = false, -- whether or not to highlight color variables at all, only supported on flutter >= 2.10
-	      		background = false, -- highlight the background
-	      		background_color = nil, -- required, when background is transparent (i.e. background_color = { r = 19, g = 17, b = 24},)
-	      		foreground = false, -- highlight the foreground
-	      		virtual_text = true, -- show the highlight using virtual text
-	      		virtual_text_str = "■", -- the virtual text character to highlight
+	      	    enabled = false, -- whether or not to highlight color variables at all, only supported on flutter >= 2.10
+	      	    background = false, -- highlight the background
+	      	    background_color = nil, -- required, when background is transparent (i.e. background_color = { r = 19, g = 17, b = 24},)
+	      	    foreground = false, -- highlight the foreground
+	      	    virtual_text = true, -- show the highlight using virtual text
+	      	    virtual_text_str = "■", -- the virtual text character to highlight
 	      	},
 	      	-- see the link below for details on each option:
 	      	-- https://github.com/dart-lang/sdk/blob/master/pkg/analysis_server/tool/lsp_spec/README.md#client-workspace-configuration
 	      	settings = {
-	      	  	showTodos = true,
-	      	  	completeFunctionCalls = true,
-	      	  	renameFilesWithClasses = "prompt", -- "always"
-	      	  	enableSnippets = true,
-	      	  	updateImportsOnRename = true, -- Whether to update imports and other directives when files are renamed. Required for `FlutterRename` command.
+	      	    showTodos = true,
+	      	    completeFunctionCalls = true,
+	      	    renameFilesWithClasses = "prompt", -- "always"
+	      	    enableSnippets = true,
+	      	    updateImportsOnRename = true, -- Whether to update imports and other directives when files are renamed. Required for `FlutterRename` command.
 	      	}
-	    }
+       }
 	})
 
     vim.cmd([[
-    	 " Show hover
+        " Show hover
 		nnoremap K <Cmd>lua vim.lsp.buf.hover()<CR>
 		 " Jump to definition
 		nnoremap gd <Cmd>lua vim.lsp.buf.definition()<CR>
@@ -387,32 +489,36 @@ else
         }
     })
 
+    require("lspconfig").pylsp.setup({})
+
     local navic = require("nvim-navic")
 
     navic.setup {
-          lsp = {
-        auto_attach = true,
-        preference = nil,
-          },
-          highlight = false,
-          separator = " > ",
-          depth_limit = 0,
-          depth_limit_indicator = "..",
-          safe_output = true,
-          lazy_update_context = false,
-          click = false,
-          format_text = function(text)
+            lsp = {
+            auto_attach = true,
+            -- preference = nil,
+            },
+            highlight = false,
+            separator = " > ",
+            depth_limit = 0,
+            depth_limit_indicator = "..",
+            safe_output = true,
+            lazy_update_context = false,
+            click = false,
+            format_text = function(text)
         return text
-          end,
+            end,
     }
-
-    require'lspconfig'.pylsp.setup({})
 
     local builtin = require('telescope.builtin')
     vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
     vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
     vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
     vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
+    vim.keymap.set('n', '<leader>fs', builtin.lsp_document_symbols, { desc = "Find Symbols"})
+    vim.keymap.set('n', '<leader>fw', builtin.grep_string, { desc = "Find Word under Cursor"})
+    vim.keymap.set('n', '<leader>gc', builtin.git_commits, { desc = "Search Git Commits"})
+    vim.keymap.set('n', '<leader>gb', builtin.git_bcommits, { desc = "Search Git Commits for Buffer"})
 
     require("marks").setup({
         default_mappings = true,
@@ -500,18 +606,18 @@ else
     rt.inlay_hints.enable()
 
     require("nvim-tree").setup({
-       sync_root_with_cwd = true,
-       respect_buf_cwd = true,
-       update_focused_file = {
-           enable = true,
-           update_root = true
-       },
+        sync_root_with_cwd = true,
+        respect_buf_cwd = true,
+        update_focused_file = {
+            enable = true,
+            update_root = true
+        },
     })
 
     local nvim_lsp = require('lspconfig')
 
     local on_attach = function(client)
-          require('completion').on_attach(client)
+            require('completion').on_attach(client)
     end
 
     -- settings:
@@ -530,7 +636,7 @@ else
     vim.opt.autoindent = true
 
     vim.cmd([[
-    autocmd vimenter * if !argc() | NERDTree | endif
+    " autocmd vimenter * if !argc() | NERDTree | endif
     autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif  
     " autocmd vimenter * if !argc() | NvimTreeToggle | endif
     " autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif  
@@ -564,14 +670,14 @@ else
     vim.keymap.set("n", "<leader>Y", [["+Y]])
     vim.keymap.set({"n", "v"}, "<leader>d", [["_d]])
 
-    vim.keymap.set("n", "<leader>f", vim.lsp.buf.format)
+    vim.keymap.set("n", "<leader>F", vim.lsp.buf.format)
 
     vim.keymap.set("n", "<C-k>", "kzz")
     vim.keymap.set("n", "<C-j>", "jzz")
 
     vim.keymap.set("n", "<C-n>", "<cmd>NERDTreeToggle<CR>")
-    vim.keymap.set("n", "<leader>n", "<cmd>NERDTreeToggle<CR>")
-    vim.keymap.set("v", "<leader>n", "<cmd>NERDTreeToggle<CR>")
+    vim.keymap.set("n", "<leader>n", ":noh<CR>")
+    vim.keymap.set("v", "<leader>n", ":noh<CR>")
     -- vim.keymap.set("n", "<C-n>", "<cmd>NvimTreeToggle<CR>")
     -- vim.keymap.set("n", "<leader>n", "<cmd>NvimTreeToggle<CR>")
     -- vim.keymap.set("v", "<leader>n", "<cmd>NvimTreeToggle<CR>")
@@ -583,6 +689,10 @@ else
     
     vim.keymap.set("n", "<leader>s", ":wa<Bar>exe 'mksession! .nvim_sessions/session.vim'<CR>") -- .. v:this_session<CR>:so ~/.nvim_sessions/")
     vim.keymap.set("n", "<leader>S", ":so .nvim_sessions/session.vim<CR>")
+
+    vim.keymap.set("v", "<leader>vf", "<Esc>/\\%V")      -- search within visually selected area (visual find)
+    -- search word under cursor: * (fwd), # (aft)
+    vim.keymap.set("v", "<leader>/", 'y/\\V<C-r>"<CR>')     -- search for visually selected text
 
 --    nvim_lsp.rust_analyzer.setup({
 --          on_attach = on_attach,
@@ -609,19 +719,19 @@ else
     local rtopts = {
         tools = { -- rust-tools options
 
-          -- how to execute terminal commands
-          -- options right now: termopen / quickfix / toggleterm / vimux
-          executor = require("rust-tools.executors").termopen,
+            -- how to execute terminal commands
+            -- options right now: termopen / quickfix / toggleterm / vimux
+            executor = require("rust-tools.executors").termopen,
 
-          -- callback to execute once rust-analyzer is done initializing the workspace
-          -- The callback receives one parameter indicating the `health` of the server: "ok" | "warning" | "error"
-          on_initialized = nil,
+            -- callback to execute once rust-analyzer is done initializing the workspace
+            -- The callback receives one parameter indicating the `health` of the server: "ok" | "warning" | "error"
+            on_initialized = nil,
 
-          -- automatically call RustReloadWorkspace when writing to a Cargo.toml file.
-          reload_workspace_from_cargo_toml = true,
+            -- automatically call RustReloadWorkspace when writing to a Cargo.toml file.
+            reload_workspace_from_cargo_toml = true,
 
-          -- These apply to the default RustSetInlayHints command
-          inlay_hints = {
+            -- These apply to the default RustSetInlayHints command
+            inlay_hints = {
             -- automatically set inlay hints (type hints)
             -- default: true
             auto = true,
@@ -655,10 +765,10 @@ else
 
             -- The color of the hints
             highlight = "Comment",
-          },
+            },
 
-          -- options same as lsp hover / vim.lsp.util.open_floating_preview()
-          hover_actions = {
+            -- options same as lsp hover / vim.lsp.util.open_floating_preview()
+            hover_actions = {
 
             -- the border that is used for the hover window
             -- see vim.api.nvim_open_win()
@@ -682,11 +792,11 @@ else
             -- whether the hover action window gets automatically focused
             -- default: false
             auto_focus = false,
-          },
+            },
 
-          -- settings for showing the crate graph based on graphviz and the dot
-          -- command
-          crate_graph = {
+            -- settings for showing the crate graph based on graphviz and the dot
+            -- command
+            crate_graph = {
             -- Backend used for displaying the graph
             -- see: https://graphviz.org/docs/outputs/
             -- default: x11
@@ -704,80 +814,80 @@ else
             -- Is used for input validation and autocompletion
             -- Last updated: 2021-08-26
             enabled_graphviz_backends = {
-              "bmp",
-              "cgimage",
-              "canon",
-              "dot",
-              "gv",
-              "xdot",
-              "xdot1.2",
-              "xdot1.4",
-              "eps",
-              "exr",
-              "fig",
-              "gd",
-              "gd2",
-              "gif",
-              "gtk",
-              "ico",
-              "cmap",
-              "ismap",
-              "imap",
-              "cmapx",
-              "imap_np",
-              "cmapx_np",
-              "jpg",
-              "jpeg",
-              "jpe",
-              "jp2",
-              "json",
-              "json0",
-              "dot_json",
-              "xdot_json",
-              "pdf",
-              "pic",
-              "pct",
-              "pict",
-              "plain",
-              "plain-ext",
-              "png",
-              "pov",
-              "ps",
-              "ps2",
-              "psd",
-              "sgi",
-              "svg",
-              "svgz",
-              "tga",
-              "tiff",
-              "tif",
-              "tk",
-              "vml",
-              "vmlz",
-              "wbmp",
-              "webp",
-              "xlib",
-              "x11",
+                "bmp",
+                "cgimage",
+                "canon",
+                "dot",
+                "gv",
+                "xdot",
+                "xdot1.2",
+                "xdot1.4",
+                "eps",
+                "exr",
+                "fig",
+                "gd",
+                "gd2",
+                "gif",
+                "gtk",
+                "ico",
+                "cmap",
+                "ismap",
+                "imap",
+                "cmapx",
+                "imap_np",
+                "cmapx_np",
+                "jpg",
+                "jpeg",
+                "jpe",
+                "jp2",
+                "json",
+                "json0",
+                "dot_json",
+                "xdot_json",
+                "pdf",
+                "pic",
+                "pct",
+                "pict",
+                "plain",
+                "plain-ext",
+                "png",
+                "pov",
+                "ps",
+                "ps2",
+                "psd",
+                "sgi",
+                "svg",
+                "svgz",
+                "tga",
+                "tiff",
+                "tif",
+                "tk",
+                "vml",
+                "vmlz",
+                "wbmp",
+                "webp",
+                "xlib",
+                "x11",
             },
-          },
+            },
         },
 
         -- all the opts to send to nvim-lspconfig
         -- these override the defaults set by rust-tools.nvim
         -- see https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#rust_analyzer
         server = {
-          -- standalone file support
-          -- setting it to false may improve startup time
-          standalone = true,
+            -- standalone file support
+            -- setting it to false may improve startup time
+            standalone = true,
         }, -- rust-analyzer options
 
         -- debugging stuff
         dap = {
-          adapter = {
-            type = "executable",
-            command = "lldb-vscode",
-            name = "rt_lldb",
-          },
+            adapter = {
+                type = "executable",
+                command = "lldb-vscode",
+                name = "rt_lldb",
+            },
         },
     }
 
