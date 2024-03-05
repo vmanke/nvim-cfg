@@ -47,16 +47,24 @@ else
 
     vim.g.mapleader = " "
 
-    vim.cmd([[
-    " COLORSCHEMES:
-
-    colorscheme molokai
-    " set background = dark
-    " colorscheme iceberg
-    " colorscheme blackops
-    ]])
-
     require("lazy").setup({
+        -- "paulfrische/reddish.nvim",
+        -- {
+        --     "scottmckendry/cyberdream.nvim",
+        --     lazy = false,
+        --     priority = 1000,
+        --     config = function()
+        --         require("cyberdream").setup({
+        --             -- Recommended - see "Configuring" below for more config options
+        --             transparent = true,
+        --             italic_comments = true,
+        --             hide_fillchars = true,
+        --             borderless_telescope = true,
+        --         })
+        --         vim.cmd("colorscheme cyberdream") -- set the colorscheme
+        --     end,
+        -- },
+        "EvanHahn/dw_red.vim",
         {
             "iamcco/markdown-preview.nvim",
             cmd = { 
@@ -86,6 +94,7 @@ else
             dependencies = "neovim/nvim-lspconfig",
 
         },
+        "https://gitlab.com/HiPhish/rainbow-delimiters.nvim",
         {
             'akinsho/toggleterm.nvim',
             version = "*",
@@ -199,6 +208,70 @@ else
 
         }
     })
+
+    
+    vim.cmd([[
+    " COLORSCHEMES:
+
+    colorscheme molokai
+    " set background = dark
+    " colorscheme iceberg
+    " colorscheme blackops
+    ]])
+
+    -- --------------------------------------------------------------------------------
+
+    local rainbow_delimiters = require('rainbow-delimiters')
+
+    vim.g.rainbow_delimiters = {
+        strategy = {
+            [''] = rainbow_delimiters.strategy['global'],
+            vim = rainbow_delimiters.strategy['local'],
+        },
+        query = {
+            [''] = 'rainbow-delimiters',
+            lua = 'rainbow-blocks',
+        },
+        priority = {
+            [''] = 110,
+            lua = 210,
+        },
+        highlight = {
+            'RainbowDelimiterRed',
+            'RainbowDelimiterYellow',
+            'RainbowDelimiterBlue',
+            'RainbowDelimiterOrange',
+            'RainbowDelimiterGreen',
+            'RainbowDelimiterViolet',
+            'RainbowDelimiterCyan',
+        },
+    }
+
+--    require('nvim-treesitter.configs').setup({
+--        -- A list of parser names, or "all" (the five listed parsers should always be installed)
+--        ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "rust", "latex", "python" },
+        --
+--        -- Install parsers synchronously (only applied to `ensure_installed`)
+--        sync_install = false,
+--
+--        -- Automatically install missing parsers when entering buffer
+--        -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
+--        auto_install = true,
+--
+--        ignore_install = { "javascript" },
+        --
+--        highlight = {
+--            enable = true,
+--            -- disable = function(lang, buf)
+--            --     local max_filesize = 100 * 1024 -- 100 KB
+--            --     local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
+--            --     if ok and stats and stats.size > max_filesize then
+--            --         return true
+--            --     end
+--            -- end,
+--            additional_vim_regex_highlighting = false,
+--        },
+--    })
 
     -- --------------------------------------------------------------------------------
 
@@ -490,25 +563,56 @@ else
     })
 
     require("lspconfig").pylsp.setup({})
+    require('lspconfig').rust_analyzer.setup({})
 
     local navic = require("nvim-navic")
 
     navic.setup {
-            lsp = {
-            auto_attach = true,
-            -- preference = nil,
-            },
-            highlight = false,
-            separator = " > ",
-            depth_limit = 0,
-            depth_limit_indicator = "..",
-            safe_output = true,
-            lazy_update_context = false,
-            click = false,
-            format_text = function(text)
-        return text
-            end,
+        icons = {
+            File = ' ',
+            Module = ' ',
+            Namespace = ' ',
+            Package = ' ',
+            Class = ' ',
+            Method = ' ',
+            Property = ' ',
+            Field = ' ',
+            Constructor = ' ',
+            Enum = ' ',
+            Interface = ' ',
+            Function = ' ',
+            Variable = ' ',
+            Constant = ' ',
+            String = ' ',
+            Number = ' ',
+            Boolean = ' ',
+            Array = ' ',
+            Object = ' ',
+            Key = ' ',
+            Null = ' ',
+            EnumMember = ' ',
+            Struct = ' ',
+            Event = ' ',
+            Operator = ' ',
+            TypeParameter = ' '
+        },
+        lsp = {
+            auto_attach = false,
+            -- preference = {"rust-analyzer",},
+        },
+        highlight = false,
+        separator = " > ",
+        depth_limit = 0,
+        depth_limit_indicator = "..",
+        safe_output = true,
+        lazy_update_context = false,
+        click = false,
+        format_text = function(text)
+            return text
+        end,
     }
+
+    vim.g.navic_silence = true
 
     -- ----------------------------------------------------------------------
 
@@ -723,6 +827,7 @@ else
     vim.keymap.set("v", "<leader>vf", "<Esc>/\\%V")      -- search within visually selected area (visual find)
     -- search word under cursor: * (fwd), # (aft)
     vim.keymap.set("v", "<leader>/", 'y/\\V<C-r>"<CR>')     -- search for visually selected text
+    vim.keymap.set("n", "<leader>iw", 'yiw/\\V<C-r>"<CR>')     -- search for inner word
 
 --    nvim_lsp.rust_analyzer.setup({
 --          on_attach = on_attach,
@@ -762,39 +867,39 @@ else
 
             -- These apply to the default RustSetInlayHints command
             inlay_hints = {
-            -- automatically set inlay hints (type hints)
-            -- default: true
-            auto = true,
-
-            -- Only show inlay hints for the current line
-            only_current_line = false,
-
-            -- whether to show parameter hints with the inlay hints or not
-            -- default: true
-            show_parameter_hints = true,
-
-            -- prefix for parameter hints
-            -- default: "<-"
-            parameter_hints_prefix = " <- ",
-
-            -- prefix for all the other hints (type, chaining)
-            -- default: " = >"
-            other_hints_prefix = " => ",
-
-            -- whether to align to the length of the longest line in the file
-            max_len_align = false,
-
-            -- padding from the left if max_len_align is true
-            max_len_align_padding = 1,
-
-            -- whether to align to the extreme right or not
-            right_align = false,
-
-            -- padding from the right if right_align is true
-            right_align_padding = 7,
-
-            -- The color of the hints
-            highlight = "Comment",
+                -- automatically set inlay hints (type hints)
+                -- default: true
+                auto = true,
+    
+                -- Only show inlay hints for the current line
+                only_current_line = false,
+    
+                -- whether to show parameter hints with the inlay hints or not
+                -- default: true
+                show_parameter_hints = true,
+    
+                -- prefix for parameter hints
+                -- default: "<-"
+                parameter_hints_prefix = " <- ",
+    
+                -- prefix for all the other hints (type, chaining)
+                -- default: " = >"
+                other_hints_prefix = " => ",
+    
+                -- whether to align to the length of the longest line in the file
+                max_len_align = false,
+    
+                -- padding from the left if max_len_align is true
+                max_len_align_padding = 1,
+    
+                -- whether to align to the extreme right or not
+                right_align = false,
+    
+                -- padding from the right if right_align is true
+                right_align_padding = 7,
+    
+                -- The color of the hints
+                highlight = "Comment",
             },
 
             -- options same as lsp hover / vim.lsp.util.open_floating_preview()
